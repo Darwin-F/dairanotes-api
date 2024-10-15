@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dairanotes/internal/auth"
 	"dairanotes/internal/controller"
 	"dairanotes/internal/database"
 	"fmt"
@@ -17,10 +18,14 @@ func main() {
 		return
 	}
 
+	authController := controller.NewAuthController(db)
 	noteController := controller.NewNotesController(db)
-	userController := controller.NewUsersController(db)
+	userController := controller.NewUserController(db)
+
+	r.POST("/login", authController.Login)
 
 	noteGroup := r.Group("/notes")
+	noteGroup.Use(auth.JwtMiddleware())
 	noteGroup.GET("/", noteController.Index)
 	noteGroup.POST("/", noteController.Store)
 	noteGroup.GET("/:id", noteController.Show)
@@ -28,6 +33,7 @@ func main() {
 	noteGroup.DELETE("/:id", noteController.Destroy)
 
 	userGroup := r.Group("/users")
+	userGroup.Use(auth.JwtMiddleware())
 	userGroup.POST("/", userController.Store)
 	userGroup.PATCH("/:id", userController.Update)
 	userGroup.DELETE("/:id", userController.Destroy)

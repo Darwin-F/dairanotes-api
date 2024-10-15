@@ -2,13 +2,18 @@ package entities
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"github.com/jmoiron/sqlx"
 )
+
+var ErrUserNotFound = errors.New("user not found")
 
 type UserMethodsInterface interface {
 	Store(ctx context.Context, newUser User) error
 	Update(ctx context.Context, userID int64, user User) error
 	Destroy(ctx context.Context, userID int64) error
+	GetPasswordByUserName(ctx context.Context, username string) (string, error)
 }
 
 type UserMethods struct {
@@ -43,4 +48,18 @@ func (u *UserMethods) Destroy(ctx context.Context, userID int64) error {
 		return err
 	}
 	return nil
+}
+
+func (u *UserMethods) GetPasswordByUserName(ctx context.Context, username string) (string, error) {
+	var password string
+	err := u.DB.QueryRowContext(ctx, "SELECT password FROM users WHERE username = ?", username).Scan(&password)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return "", err
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", ErrUserNotFound
+	}
+
+	return password, nil
 }

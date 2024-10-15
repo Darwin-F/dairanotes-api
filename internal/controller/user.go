@@ -13,7 +13,7 @@ type UserController struct {
 }
 
 func NewUserController(db *sqlx.DB) *UserController {
-	methods := entities.NewUsersMethods(db)
+	methods := entities.NewUserMethods(db)
 	bu := business.NewUserBusiness(methods)
 	return &UserController{bu: bu}
 }
@@ -21,7 +21,7 @@ func NewUserController(db *sqlx.DB) *UserController {
 func (uc *UserController) Store(c *gin.Context) {
 	var newUser entities.User
 
-	if err := c.BindJSON(&newUser); err != nil {
+	if err := c.ShouldBindJSON(&newUser); err != nil {
 		c.JSON(400, gin.H{
 			"error": "Bad request",
 		})
